@@ -10,6 +10,33 @@ class Matrix3D{
         int m = 4,n = 4;
 
     public:
+        Matrix3D(void)
+        { this->initMatrix(1); }
+
+        Matrix3D (double scl)
+        { this->initMatrix(scl); }
+
+        Matrix3D (VectorND tras){
+            this->initMatrix(1);
+            for(int index=0; index<3; ++index)
+                this->M[index][3] = tras[index];
+        }
+
+        Matrix3D (VectorND v, double th){
+            this->initMatrix(1);
+            th *= M_PI/180;
+
+            double x = v[0], y = v[1], z = v[2];
+
+            double umc = 1 - cos(th);
+            double co = cos(th);
+            double si = sin(th); 
+
+            this->M[0][0] = co + x*x*umc  ; this->M[1][0] = x*y*umc - z*si; this->M[2][0] = x*z*umc + y*si;
+            this->M[0][1] = y*x*umc + z*si; this->M[1][1] = co + y*y*umc  ; this->M[2][1] = y*z*umc - x*si;
+            this->M[0][2] = z*x*umc - y*si; this->M[1][2] = z*y*umc + x*si; this->M[2][2] = co + z*z*umc  ;
+        }
+
         Matrix3D(double rot_th, char axis){
             this->initMatrix(1);
             rot_th *= M_PI/180;
@@ -46,7 +73,7 @@ class Matrix3D{
         }
 };
     
-VectorND operator * (const VectorND& a, const Matrix3D& M){
+VectorND operator * (const Matrix3D& M, const VectorND& a){
     VectorND aux {0,0,0,1};
     VectorND out {0,0,0};
     for(int index=0; index<a.dim(); ++index)
@@ -55,9 +82,22 @@ VectorND operator * (const VectorND& a, const Matrix3D& M){
     for(int i=0; i<n; ++i){
         double sum = 0.0;    
         for(int j=0; j<n; ++j)
-            sum += M[i][j] * a[j]; 
+            sum += M[i][j] * aux[j];
         if( i!=3 )
             out[i] = sum;
+    }
+    return out;
+}
+
+Matrix3D operator * (const Matrix3D& M, const Matrix3D& N){
+    Matrix3D out;
+    for(int i=0; i<4; ++i){
+        for(int j=0; j<4; ++j){
+            double sum = 0.0;
+            for(int k=0; k<4; ++k)
+                sum += M[i][k]*N[k][j];
+            out[i][j] = sum;
+        }
     }
     return out;
 }
