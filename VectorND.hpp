@@ -237,7 +237,7 @@ ostream &operator<<(ostream &os, const VectorND &a)
     return os;
 }
 
-// ------- SPECIAL VECTORS FOR POV ---------------------
+// ------- SPECIAL VECTORS ---------------------
 
 VectorND O{0, 0, 0};
 VectorND I{1, 0, 0};
