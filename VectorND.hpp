@@ -141,4 +141,71 @@ bool operator == (const VectorND& vecA, const VectorND& vecB){
 
 bool operator != (const VectorND& vecA, const VectorND& vecB){ return !(vecA==vecB); }
 
+VectorND operator + (const VectorND& vecA, const VectorND& vecB){
+    VectorND out {};
+    if( vecA.dim()==vecB.dim() ){
+        out.initVector( vecA.dim() );
+        for( int index = 0; index<vecA.dim(); ++index )
+            out[index] = vecA[index] + vecB[index];
+    }else
+        cerr << "Not the same dimension in + operator" << endl;
+    return out;
+}
+
+VectorND operator - (const VectorND& vecA, const VectorND& vecB){
+    VectorND out {};
+    if( vecA.dim()==vecB.dim() ){
+        out.initVector( vecA.dim() );
+        for( int index = 0; index<vecA.dim(); ++index )
+            out[index] = vecA[index] - vecB[index];
+    }else
+        cerr << "Not the same dimension in + operator" << endl;
+    return out;
+}
+
+VectorND operator * (double f, const VectorND& vecA){
+    VectorND out = vecA;
+    for(int index = 0; index<vecA.dim(); ++index)
+        out[index] *= f;
+    return out;
+}
+
+VectorND operator / (const VectorND& vecA, double f){
+    VectorND out = vecA;
+    for(int index = 0; index<vecA.dim(); ++index)
+        out[index] /= f;
+    return out;
+}
+
+VectorND operator % (const VectorND& vecA, const VectorND& vecB){
+    if (vecA.dim() != 3 || vecB.dim() != 3)
+        cerr << "Done with the first 3 entries (X operator)";
+    return VectorND{vecA[1]*vecB[2] - vecA[2]*vecB[1], vecA[2]*vecB[0] - vecA[0]*vecB[2], vecA[0]*vecB[1] - vecA[1]*vecB[0]};
+}
+
+double operator * (const VectorND& vecA, const VectorND& vecB){
+    double out = 0.0;
+    if( vecA.dim()==vecB.dim() ){
+        for(int index = 0; index<vecA.dim(); ++index)
+            out += vecA[index] * vecB[index];
+    }else
+        cerr << "Not same dimensions in operator *" << endl;
+    return out;
+} 
+
+ostream &operator<<(ostream &os, const VectorND& vecA){
+    os << '<';
+    for (int index = 0; index<vecA.dim(); ++index)
+        (index < (vecA.dim() - 1)) ? os << vecA[index] << ',' : os << vecA[index] << '>';
+    return os;
+}
+
+// ----- SPECIAL VECTORS --------------------
+
+VectorND O {0,0,0};
+VectorND I {1,0,0};
+VectorND J {0,1,0};
+VectorND K {0,0,1};
+VectorND I1{1,1,1};
+
 #endif 
