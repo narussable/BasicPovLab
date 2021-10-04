@@ -9,136 +9,106 @@
 
 using namespace std;
 
-double invSqrd(double number)
-{
+double invSqrd(double number){
     double y = number;
-    double x2 = y * 0.5;
+    double x2= y * 0.5;
     std::int64_t i = *(std::int64_t *)&y;
-    // The magic number is for doubles is form
-    // https://cs uwaterloo.ca/~m32rober/rsqrt.pdf
-    i = 0x5fe6eb50c7b537a9 - (i >> 1);
-    y = *(double *)&i;
+
+    i = 0x5fe6eb50c7b537a9 - (i >>1);
     y = y * (1.5 - (x2 * y * y));
     y = y * (1.5 - (x2 * y * y));
     return y;
 }
 
-class VectorND
-{
-private:
-    double *A;
-    double norm;
-    int n;
+class VectorND{
+    protected:
+        double *A;
+        double norm;
+        unsigned int n;
 
-    double chiSqrd(void)
-    {
-        double sum = 0;
-        for (int index = 0; index < this->n; ++index)
-            sum += this->A[index] * this->A[index];
-        return sum;
-    }
+        double chiSqrd(void){
+            double sum = 0.0;
+            for(int index = 0; index < this->n; ++index)
+                sum += this->A[index] * this->A[index];
+            return sum;
+        }
+        void updateNorm(void){ this->norm = sqrt(chiSqrd()); }
 
-    void updateNorm(void)
-    {
-        this->norm = sqrt(chiSqrd());
-    }
+    public:
+        void initVector( unsigned int N ){
+            this->n = N;
+            this->A = (double *) malloc (N * sizeof(double));
+        }
 
-public:
-    VectorND(initializer_list<double> _list)
-    {
-        this->initVectorND(_list.size());
-        for (int index = 0; index < _list.size(); ++index)
-            this->A[index] = _list.begin()[index];
-    }
+        VectorND(initializer_list<double> _list){
+            this->initVector( _list.size() );
+            for(int index = 0; index < _list.size(); ++index)
+                this->A[index] = _list.begin()[index];
+        }
 
-    VectorND(void)
-    {
-        this->initVectorND(0);
-    }
+        VectorND(void){ this->initVector(0); }
 
-    double norma(void)
-    {
-        this->updateNorm();
-        return this->norm;
-    }
-
-    int dim(void) const
-    {
-        return this->n;
-    }
-
-    void initVectorND(int n)
-    {
-        this->n = n;
-        this->A = (double *)malloc(n * sizeof(double));
-    }
-
-    void copyVector(const VectorND &a)
-    {
-        this->initVectorND(a.dim());
-        for (int index = 0; index < a.dim(); ++index)
-            this->A[index] = a[index];
-    }
-
-    double operator[](int index) const
-    {
-        return this->A[index % this->n];
-    }
-
-    double &operator[](int index)
-    {
-        return this->A[index % this->n];
-    }
-
-    VectorND normalize(void)
-    {
-        VectorND out = *this;
-        for (int index = 0; index < this->n; ++index)
-            out[index] *= invSqrd(chiSqrd());
-        return out;
-    }
-
-    VectorND &operator=(const VectorND &orgn)
-    {
-        this->initVectorND(orgn.dim());
-        for (int index = 0; index < orgn.dim(); ++index)
-            this->A[index] = orgn[index];
-        return *this;
-    }
-
-    double axisAng(char, char);
+        unsigned int dim(void) const;
+        double norma(void);
+        double axisAng(char,char);
+        double  operator[](int) const;
+        double &operator[](int);
+        VectorND &operator=(const VectorND&);
+        VectorND normalize(void);
 };
 
-double VectorND::axisAng(char ax1, char ax2)
-{
+double VectorND::norma(void){
+    this->updateNorm();
+    return this->norm;
+}
+
+unsigned int VectorND::dim(void) const{ return this->n; }
+
+double VectorND::operator [] (int index) const{
+    index = (index<0) ? index + this->n : index;
+    return this->A[index%this->n];
+}
+
+double &VectorND::operator [] (int index){
+    index = (index<0) ? index + this->n : index;
+    return this->A[index%this->n];
+}
+
+VectorND &VectorND::operator = (const VectorND& orginal){
+    this->initVector( orginal.dim() );
+    for(int index = 0; index<orginal.dim(); ++index)
+        this->A[index] = orginal[index];
+    return *this;
+}
+
+VectorND VectorND::normalize(void){
+    VectorND norm = *this;
+    for(int index = 0; index<this->n; ++index)
+        norm[index] *= invSqrd( chiSqrd() );
+    return norm;
+}
+
+double VectorND::axisAng(char ax1, char ax2){
     int uno, dos;
 
-    switch (ax1)
-    {
-    case 'X':
-    case 'x':
+    switch (ax1){
+    case 'X': case 'x':
         uno = 0;
         break;
-    case 'Y':
-    case 'y':
+    case 'Y': case 'y':
         uno = 1;
         break;
-    case 'Z':
-    case 'z':
+    case 'Z': case 'z':
         uno = 2;
     }
-    switch (ax2)
-    {
-    case 'X':
-    case 'x':
+    switch (ax2){
+    case 'X': case 'x':
         dos = 0;
         break;
-    case 'Y':
-    case 'y':
+    case 'Y': case 'y':
         dos = 1;
         break;
-    case 'Z':
-    case 'z':
+    case 'Z': case 'z':
         dos = 2;
     }
     double x = this->A[uno], y = this->A[dos], angle;
@@ -158,91 +128,84 @@ double VectorND::axisAng(char ax1, char ax2)
     return angle;
 }
 
-bool operator==(const VectorND &a, const VectorND &b)
-{
-    bool result = true;
-    if (a.dim() == b.dim())
-    {
-        for (int index = 0; index < a.dim(); ++index)
-            result = result && (a[index] == b[index]);
+bool operator == (const VectorND& vecA, const VectorND& vecB){
+    if( vecA.dim()==vecB.dim() ){
+        bool result = true;
+        for(int index = 0; index<vecA.dim(); ++index)
+            result = result && (vecA[index] == vecB[index]);
         return result;
     }
-    cout << "Mames bro... not the same dimension\n";
+    cerr << "Not the same dimension in == operator" << endl;
     return false;
 }
 
-VectorND operator+(const VectorND &a, const VectorND &b)
-{
-    VectorND out{};
-    if (a.dim() == b.dim())
-    {
-        out.initVectorND(a.dim());
-        for (int index = 0; index < a.dim(); ++index)
-            out[index] = a[index] + b[index];
-    }
-    else
-        cerr << "You're having some dimension problems in sum . . .\n";
+bool operator != (const VectorND& vecA, const VectorND& vecB){ return !(vecA==vecB); }
+
+VectorND operator + (const VectorND& vecA, const VectorND& vecB){
+    VectorND out {};
+    if( vecA.dim()==vecB.dim() ){
+        out.initVector( vecA.dim() );
+        for( int index = 0; index<vecA.dim(); ++index )
+            out[index] = vecA[index] + vecB[index];
+    }else
+        cerr << "Not the same dimension in + operator" << endl;
     return out;
 }
 
-VectorND operator-(const VectorND &a, const VectorND &b)
-{
-    VectorND out{};
-    if (a.dim() == b.dim())
-    {
-        out.initVectorND(a.dim());
-        for (int index = 0; index < a.dim(); ++index)
-            out[index] = a[index] - b[index];
-    }
-    else
-        cerr << "You're having some dimension problems in sub. . .\n";
+VectorND operator - (const VectorND& vecA, const VectorND& vecB){
+    VectorND out {};
+    if( vecA.dim()==vecB.dim() ){
+        out.initVector( vecA.dim() );
+        for( int index = 0; index<vecA.dim(); ++index )
+            out[index] = vecA[index] - vecB[index];
+    }else
+        cerr << "Not the same dimension in + operator" << endl;
     return out;
 }
 
-VectorND operator%(const VectorND &a, const VectorND &b)
-{
-    if (a.dim() != 3 || b.dim() != 3)
-        cerr << "The cross product was realized with the first 3 entries";
-    return VectorND{a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]};
-}
-
-VectorND operator*(double r, const VectorND &b)
-{
-    VectorND out{};
-    out.initVectorND(b.dim());
-    for (int index = 0; index < b.dim(); ++index)
-        out[index] = r * b[index];
+VectorND operator * (double f, const VectorND& vecA){
+    VectorND out = vecA;
+    for(int index = 0; index<vecA.dim(); ++index)
+        out[index] *= f;
     return out;
 }
 
-VectorND operator/(const VectorND &a, double r)
-{
-    VectorND out{};
-    out.initVectorND(a.dim());
-    for (int index = 0; index < a.dim(); ++index)
-        out[index] = a[index] / r;
+VectorND operator / (const VectorND& vecA, double f){
+    VectorND out = vecA;
+    for(int index = 0; index<vecA.dim(); ++index)
+        out[index] /= f;
     return out;
 }
 
-double operator*(const VectorND &a, const VectorND &b)
-{
-    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+VectorND operator % (const VectorND& vecA, const VectorND& vecB){
+    if (vecA.dim() != 3 || vecB.dim() != 3)
+        cerr << "Done with the first 3 entries (X operator)";
+    return VectorND{vecA[1]*vecB[2] - vecA[2]*vecB[1], vecA[2]*vecB[0] - vecA[0]*vecB[2], vecA[0]*vecB[1] - vecA[1]*vecB[0]};
 }
 
-ostream &operator<<(ostream &os, const VectorND &a)
-{
+double operator * (const VectorND& vecA, const VectorND& vecB){
+    double out = 0.0;
+    if( vecA.dim()==vecB.dim() ){
+        for(int index = 0; index<vecA.dim(); ++index)
+            out += vecA[index] * vecB[index];
+    }else
+        cerr << "Not same dimensions in operator *" << endl;
+    return out;
+} 
+
+ostream &operator<<(ostream &os, const VectorND& vecA){
     os << '<';
-    for (int index = 0; index < a.dim(); ++index)
-        (index < (a.dim() - 1)) ? os << a[index] << ',' : os << a[index] << '>';
+    for (int index = 0; index<vecA.dim(); ++index)
+        (index < (vecA.dim() - 1)) ? os << vecA[index] << ',' : os << vecA[index] << '>';
     return os;
 }
 
-// ------- SPECIAL VECTORS ---------------------
+// ----- SPECIAL VECTORS --------------------
 
-VectorND O{0, 0, 0};
-VectorND I{1, 0, 0};
-VectorND J{0, 1, 0};
-VectorND K{0, 0, 1};
-VectorND I1{1, 1, 1};
+VectorND O {0,0,0};
+VectorND I {1,0,0};
+VectorND J {0,1,0};
+VectorND K {0,0,1};
+VectorND I1{1,1,1};
 
-#endif
+#endif 
