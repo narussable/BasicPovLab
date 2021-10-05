@@ -55,6 +55,10 @@ class VectorND{
         double &operator[](int);
         VectorND &operator=(const VectorND&);
         VectorND normalize(void);
+<<<<<<< HEAD
+=======
+        VectorND &operator - (void);
+>>>>>>> HotFix
 };
 
 double VectorND::norma(void){
@@ -78,6 +82,12 @@ VectorND &VectorND::operator = (const VectorND& orginal){
     this->initVector( orginal.dim() );
     for(int index = 0; index<orginal.dim(); ++index)
         this->A[index] = orginal[index];
+    return *this;
+}
+
+VectorND& VectorND::operator - (void){
+    for(int index = 0; index<this->n; ++index)
+        this->A[index] *= -1;
     return *this;
 }
 
