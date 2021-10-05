@@ -74,6 +74,24 @@ Matrix operator + (const Matrix& matA,const Matrix& matB){
     return out;    
 }
 
+Matrix operator * (const Matrix& matA, const Matrix& matB){
+    Matrix out (0,0);
+    if( matA.dimN()==matB.dimM() ){
+        out.initMatrix( matA.dimM(), matB.dimN() );
+        for(int i = 0; i<matA.dimM(); ++i){
+            for(int j = 0; j<matB.dimN(); ++j){
+                double suma = 0.0;
+                for(int k = 0; k<matB.dimM(); ++k)
+                    suma += matA[i][k] * matB[k][j];
+                out[i][j] = suma; 
+            }
+        }
+    }else
+        cerr << "Dimensional problem in matrix operation *" << endl;
+    return out;
+}
+
+
 ostream& operator << (ostream& os, const Matrix& M){
     for(int i=0; i<M.dimM(); ++i){
         for(int j=0; j<M.dimN(); ++j)
@@ -81,6 +99,22 @@ ostream& operator << (ostream& os, const Matrix& M){
        os << '\n';
     }
     return os;
+}
+
+VectorND operator * (const Matrix& matA, const VectorND& vecB){
+    VectorND out {};
+    if( matA.dimM()==vecB.dim() ){
+        out = vecB;
+        Matrix aux( vecB.dim(),1 );
+        for(int index = 0; index<vecB.dim(); ++index)
+            aux[index][0] = vecB[index];
+        cerr << aux << endl;
+        //aux = matA * aux;
+        //for(int index = 0; index<vecB.dim(); ++index)
+        //    out[index] = aux[index][0];
+    }else
+        cerr << "Dimensional probelm in matrix operation * (vector)" << endl;
+    return out;
 }
 
 #endif

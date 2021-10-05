@@ -55,10 +55,7 @@ class VectorND{
         double &operator[](int);
         VectorND &operator=(const VectorND&);
         VectorND normalize(void);
-<<<<<<< HEAD
-=======
         VectorND &operator - (void);
->>>>>>> HotFix
 };
 
 double VectorND::norma(void){
