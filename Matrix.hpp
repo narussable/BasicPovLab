@@ -20,10 +20,13 @@ class Matrix{
             }
         }
 
+        bool dimComparation(const Matrix&) const;
         unsigned int dimM(void) const;
         unsigned int dimN(void) const;
         void initMatrix(int=0,int=0);
         double* operator [] (int) const;
+        Matrix& operator = (const Matrix&);
+        Matrix& operator - (void);
 };
 
 void Matrix::initMatrix(int m, int n){
@@ -34,10 +37,42 @@ void Matrix::initMatrix(int m, int n){
         this->A[index] = (double*) malloc (n* sizeof(double)); 
 }
 
-double* Matrix::operator [] (int index) const { return this->A[index%this->n]; }
+bool Matrix::dimComparation(const Matrix& matA) const
+{ return ( this->m == matA.dimM() ) && ( this->n == matA.dimN() ); }
 
 unsigned int Matrix::dimM(void) const{ return this->m; }
 unsigned int Matrix::dimN(void) const{ return this->n; }
+double* Matrix::operator [] (int index) const { return this->A[index%this->n]; }
+
+Matrix& Matrix::operator = (const Matrix& matA){
+    this->initMatrix( matA.dimM(), matA.dimN() );
+    for(int i = 0; i<matA.dimM(); ++i){
+        for(int j = 0; j<matA.dimN(); ++j)
+            this->A[i][j] = matA[i][j];
+    }
+    return *this;
+}
+
+Matrix& Matrix::operator - (void){
+    for(int i = 0; i<this->m; ++i){
+        for(int j = 0; j<this->n; ++j)
+            this->A[i][j] *= -1;
+    }
+    return *this;
+}
+
+Matrix operator + (const Matrix& matA,const Matrix& matB){
+    Matrix out(0,0);
+    if( matA.dimComparation(matB) ){
+        out = matA;
+        for(int i = 0; i<matA.dimM(); ++i){
+            for(int j = 0; j<matA.dimN(); ++j)
+                out[i][j] += matB[i][j];
+        }
+    }else
+        cerr << "Dimensional problem in matrix operation +" << endl;
+    return out;    
+}
 
 ostream& operator << (ostream& os, const Matrix& M){
     for(int i=0; i<M.dimM(); ++i){
