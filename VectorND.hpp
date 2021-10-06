@@ -51,6 +51,7 @@ class VectorND{
         unsigned int dim(void) const;
         double norma(void);
         double axisAng(char,char);
+        void append(double);
         double  operator[](int) const;
         double &operator[](int);
         VectorND &operator=(const VectorND&);
@@ -135,6 +136,12 @@ double VectorND::axisAng(char ax1, char ax2){
     return angle;
 }
 
+void VectorND::append(double r){
+    this->A = (double*) realloc (this->A, (this->n+1) * sizeof(double));
+    this->A[this->n] = r;
+    this->n += 1;
+}
+
 bool operator == (const VectorND& vecA, const VectorND& vecB){
     if( vecA.dim()==vecB.dim() ){
         bool result = true;
@@ -200,11 +207,27 @@ double operator * (const VectorND& vecA, const VectorND& vecB){
     return out;
 } 
 
-ostream &operator<<(ostream &os, const VectorND& vecA){
+ostream &operator << (ostream &os, const VectorND& vecA){
     os << '<';
     for (int index = 0; index<vecA.dim(); ++index)
         (index < (vecA.dim() - 1)) ? os << vecA[index] << ',' : os << vecA[index] << '>';
     return os;
+}
+
+istream& operator >> (istream& is, VectorND& vecA){
+    while( !is.eof() && is.get()!='<' )
+        ;
+    while( is.get() != '>' ){
+        if( is.eof() )
+            return is;
+        else{
+            double r;
+            is >> r;
+            vecA.append(r);
+        }
+        cerr << "pereo"<< endl;
+    }
+    return is;
 }
 
 // ----- SPECIAL VECTORS --------------------

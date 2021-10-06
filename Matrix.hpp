@@ -27,6 +27,9 @@ class Matrix{
         double* operator [] (int) const;
         Matrix& operator = (const Matrix&);
         Matrix& operator - (void);
+        Matrix& operator +=(const Matrix&);
+        Matrix& operator -=(const Matrix&);
+        Matrix& operator *=(const Matrix&);
 };
 
 void Matrix::initMatrix(int m, int n){
@@ -91,6 +94,53 @@ Matrix operator * (const Matrix& matA, const Matrix& matB){
     return out;
 }
 
+Matrix operator * (double r, const Matrix& matA){
+    for(int i = 0; i<matA.dimM(); ++i){
+        for(int j = 0; j<matA.dimN(); ++j)
+            matA[i][j] *= r;
+    }
+    return matA;    
+}
+
+Matrix operator / (const Matrix& matA, double r){
+    for(int i = 0; i<matA.dimM(); ++i){
+        for(int j = 0; j<matA.dimN(); ++j)
+            matA[i][j] /= r;
+    }
+    return matA;    
+}
+
+Matrix& Matrix::operator += (const Matrix& matA){
+    *this = *this + matA;
+    return *this;
+}
+
+Matrix& Matrix::operator *= (const Matrix& matA){
+    *this = *this * matA;
+    return *this;
+}
+
+Matrix operator ^ (const Matrix& matA, unsigned int r){
+    Matrix out = matA;
+    for(int index = 0; index<(r-1); ++index)
+        out *= matA; 
+    return out;
+}
+
+VectorND operator * (const Matrix& matA, const VectorND& vecB){
+    VectorND out {};
+    if( matA.dimN()==vecB.dim() ){
+        out = vecB;
+        for(int i = 0; i<vecB.dim(); ++i){
+            double suma = 0.0;
+            for(int j = 0; j<matA.dimN(); ++j)
+                suma += matA[i][j] * vecB[j];
+            out[i] = suma;
+        }
+    }else
+        cerr << "Dimensional probelm in matrix operation * (vector)" << endl;
+    return out;
+}
 
 ostream& operator << (ostream& os, const Matrix& M){
     for(int i=0; i<M.dimM(); ++i){
@@ -99,22 +149,6 @@ ostream& operator << (ostream& os, const Matrix& M){
        os << '\n';
     }
     return os;
-}
-
-VectorND operator * (const Matrix& matA, const VectorND& vecB){
-    VectorND out {};
-    if( matA.dimM()==vecB.dim() ){
-        out = vecB;
-        Matrix aux( vecB.dim(),1 );
-        for(int index = 0; index<vecB.dim(); ++index)
-            aux[index][0] = vecB[index];
-        cerr << aux << endl;
-        //aux = matA * aux;
-        //for(int index = 0; index<vecB.dim(); ++index)
-        //    out[index] = aux[index][0];
-    }else
-        cerr << "Dimensional probelm in matrix operation * (vector)" << endl;
-    return out;
 }
 
 #endif
