@@ -100,24 +100,24 @@ double VectorND::axisAng(char ax1, char ax2){
     int uno, dos;
 
     switch (ax1){
-    case 'X': case 'x':
-        uno = 0;
-        break;
-    case 'Y': case 'y':
-        uno = 1;
-        break;
-    case 'Z': case 'z':
-        uno = 2;
+        case 'X': case 'x':
+            uno = 0;
+            break;
+        case 'Y': case 'y':
+            uno = 1;
+            break;
+        case 'Z': case 'z':
+            uno = 2;
     }
     switch (ax2){
-    case 'X': case 'x':
-        dos = 0;
-        break;
-    case 'Y': case 'y':
-        dos = 1;
-        break;
-    case 'Z': case 'z':
-        dos = 2;
+        case 'X': case 'x':
+            dos = 0;
+            break;
+        case 'Y': case 'y':
+            dos = 1;
+            break;
+        case 'Z': case 'z':
+            dos = 2;
     }
     double x = this->A[uno], y = this->A[dos], angle;
     if (x > 0 && y >= 0)
