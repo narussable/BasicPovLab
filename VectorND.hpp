@@ -14,12 +14,14 @@ using namespace std;
 // to faster the inverse square root (less time in render).
 double invSqrd(double number){
     double y = number;
-    double x2= y * 0.5;
-    std::int64_t i = *(std::int64_t *)&y;
-
-    i = 0x5fe6eb50c7b537a9 - (i >>1);
-    y = y * (1.5 - (x2 * y * y));
-    y = y * (1.5 - (x2 * y * y));
+    double x2 = y * 0.5;
+    std::int64_t i = *(std::int64_t *) &y;
+    // The magic number is for doubles is from https://cs.uwaterloo.ca/~m32rober/rsqrt.pdf
+    i = 0x5fe6eb50c7b537a9 - (i >> 1);
+    y = *(double *) &i;
+    y = y * (1.5 - (x2 * y * y));   // 1st iteration
+    y = y * ( 1.5 - ( x2 * y * y ) );   // 2nd iteration, this can be removed
+    y = y * ( 1.5 - ( x2 * y * y ) );   // 2nd iteration, this can be removed
     return y;
 }
 
@@ -94,14 +96,9 @@ VectorND& VectorND::operator - (void){
 
 VectorND VectorND::normalize(void){
     VectorND norm = *this;
-    double modCuad = chiSqrd();
-    cerr << modCuad << " --> " << invSqrd(modCuad) << endl;
-    for(int index = 0; index<this->n; ++index){
-        //cerr << norm[index] << "*" << modCuad << " = ";
-        //cerr << norm[index] * modCuad << endl;
-        norm[index] *= invSqrd( modCuad );
-        //cerr << endl;
-    }
+    double modCuad = invSqrd(chiSqrd());
+    for(int index = 0; index<this->n; ++index)
+        norm[index] *= modCuad;
     return norm;
 }
 
