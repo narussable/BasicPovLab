@@ -1,116 +1,43 @@
 #ifndef MATRIX3D_HPP
 #define MATRIX3D_HPP
 
-#include "VectorND.hpp"
-#include <cmath>
+#include "Matrix.hpp"
 
-class Matrix3D{
+double u_nn(double u, double th)
+{  return cos(th) + u*u*(1 - cos(th));  }
+
+double u_mn(VectorND u, double th, initializer_list<int> l, int pos)
+{  return u[l.begin()[0]]*u[l.begin()[1]]*(1 - cos(th)) + pos*u[l.begin()[2]]*sin(th);  }
+
+class Matrix3D : public Matrix{
     private:
-        double *(*M);
-        int m = 4,n = 4;
+        Matrix M;
+        int m = 4, n = 4;
 
     public:
-        Matrix3D(void)
-        { this->initMatrix(1); }
 
-        Matrix3D (double scl)
-        { this->initMatrix(scl); }
-
-        Matrix3D (VectorND tras){
-            this->initMatrix(1);
-            for(int index=0; index<3; ++index)
-                this->M[index][3] = tras[index];
+        // Constructor:
+        // Written down for specific entry to avoid to map 
+        // the whole matrix (less c. time).
+        Matrix3D(int trace = 1) : Matrix(4,4){
+            this->A[0][0] = trace;
+            this->A[1][1] = trace;
+            this->A[2][2] = trace;
+            this->A[3][3] = trace;
         }
 
-        Matrix3D (VectorND v, double th){
-            this->initMatrix(1);
-            th *= M_PI/180;
+        // Constructor:
+        // This specific constructor generates is a rotational
+        // matrix used to rotate around a vector axis.
+        Matrix3D(VectorND u, double th, bool degree = 0) : Matrix(4,4){
+            u = u.normalize();
+            th *=  degree ? M_PI/180 : 1;
+            cerr << u << endl;
 
-            double x = v[0], y = v[1], z = v[2];
-
-            double umc = 1 - cos(th);
-            double co = cos(th);
-            double si = sin(th); 
-
-            this->M[0][0] = co + x*x*umc  ; this->M[1][0] = x*y*umc - z*si; this->M[2][0] = x*z*umc + y*si;
-            this->M[0][1] = y*x*umc + z*si; this->M[1][1] = co + y*y*umc  ; this->M[2][1] = y*z*umc - x*si;
-            this->M[0][2] = z*x*umc - y*si; this->M[1][2] = z*y*umc + x*si; this->M[2][2] = co + z*z*umc  ;
-        }
-
-        Matrix3D(double rot_th, char axis){
-            this->initMatrix(1);
-            rot_th *= M_PI/180;
-            switch(axis){
-                case 'X':
-                case 'x':
-                    this->M[1][1] = cos(rot_th);    this->M[1][2] =-sin(rot_th);
-                    this->M[2][1] = sin(rot_th);    this->M[2][2] = cos(rot_th);
-                    break;
-                case 'Y':
-                case 'y':
-                    this->M[0][0] = cos(rot_th);    this->M[0][2] = sin(rot_th);
-                    this->M[2][0] =-sin(rot_th);    this->M[2][2] = cos(rot_th);
-                    break;
-                case 'Z':
-                case 'z':
-                    this->M[0][0] = cos(rot_th);    this->M[0][1] =-sin(rot_th);
-                    this->M[1][0] = sin(rot_th);    this->M[1][1] = cos(rot_th);
-                    break;
-                default:
-                    cerr << "Really bro, you have 3 axis by the way . . .\n";
-            }
-        }
-
-        double* operator [] (int i) const
-        {   return this->M[i%n];   }
-
-        void initMatrix(double trace){
-            this->M = (double**) malloc (m*sizeof(double*));
-            for(int i=0; i<m; ++i){
-                this->M[i] = (double*) malloc (n*sizeof(double));
-                M[i][i] = trace;
-            }
+            this->A[0][0] = u_nn(u[0],th)        ; this->A[0][1] = u_mn(u,th,{0,1,2},-1); this->A[0][2] = u_mn(u,th,{0,2,1},1) ;
+            this->A[1][0] = u_mn(u,th,{1,0,2},1) ; this->A[1][1] = u_nn(u[1],th)        ; this->A[1][2] = u_mn(u,th,{1,2,0},-1);
+            this->A[2][0] = u_mn(u,th,{2,0,1},-1); this->A[2][1] = u_mn(u,th,{2,1,0},1) ; this->A[2][2] = u_nn(u[2],th)        ;
         }
 };
     
-VectorND operator * (const Matrix3D& M, const VectorND& a){
-    VectorND aux {0,0,0,1};
-    VectorND out {0,0,0};
-    for(int index=0; index<a.dim(); ++index)
-        aux[index] = a[index];
-    int n = 4;
-    for(int i=0; i<n; ++i){
-        double sum = 0.0;    
-        for(int j=0; j<n; ++j)
-            sum += M[i][j] * aux[j];
-        if( i!=3 )
-            out[i] = sum;
-    }
-    return out;
-}
-
-Matrix3D operator * (const Matrix3D& M, const Matrix3D& N){
-    Matrix3D out;
-    for(int i=0; i<4; ++i){
-        for(int j=0; j<4; ++j){
-            double sum = 0.0;
-            for(int k=0; k<4; ++k)
-                sum += M[i][k]*N[k][j];
-            out[i][j] = sum;
-        }
-    }
-    return out;
-}
-
-ostream& operator << (ostream& os, const Matrix3D& M){
-    for(int i=0; i<4; ++i){
-        for(int j=0; j<4; ++j)
-            os << M[i][j] << "\t\t";
-        os << '\n';
-    }
-    return os;
-}
-
-
-
 #endif

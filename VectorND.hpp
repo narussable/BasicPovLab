@@ -9,6 +9,9 @@
 
 using namespace std;
 
+// Piece of code obtained in 
+// https://stackoverflow.com/questions/11644441/fast-inverse-square-root-on-x64/11644533
+// to faster the inverse square root (less time in render).
 double invSqrd(double number){
     double y = number;
     double x2= y * 0.5;
@@ -91,8 +94,14 @@ VectorND& VectorND::operator - (void){
 
 VectorND VectorND::normalize(void){
     VectorND norm = *this;
-    for(int index = 0; index<this->n; ++index)
-        norm[index] *= invSqrd( chiSqrd() );
+    double modCuad = chiSqrd();
+    cerr << modCuad << " --> " << invSqrd(modCuad) << endl;
+    for(int index = 0; index<this->n; ++index){
+        //cerr << norm[index] << "*" << modCuad << " = ";
+        //cerr << norm[index] * modCuad << endl;
+        norm[index] *= invSqrd( modCuad );
+        //cerr << endl;
+    }
     return norm;
 }
 
