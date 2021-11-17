@@ -131,7 +131,7 @@ VectorND operator * (const Matrix& matA, const VectorND& vecB){
     VectorND out {};
     if( matA.dimN()==vecB.dim() ){
         out = vecB;
-        for(int i = 0; i<vecB.dim(); ++i){
+        for(int i = 0; i<matA.dimM(); ++i){
             double suma = 0.0;
             for(int j = 0; j<matA.dimN(); ++j)
                 suma += matA[i][j] * vecB[j];
