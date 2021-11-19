@@ -2,3 +2,7 @@
 a.out
 pru.cpp
 makefile
+opencv/
+cpy_bmp.hpp
+*.swp*
+*.pov*

@@ -5,12 +5,12 @@
 #include <fstream>
 #include <cstdlib>
 
-#include "matix.hpp"
+#include "Matrix.hpp"
 
 class BoolMat{
-    private:
+    protected:
         std::ifstream file;
-        MatrixInt        G;
+        Matrix           G;
         const char  * File;
         unsigned int   * M;
         unsigned int dim = 0;
@@ -29,7 +29,7 @@ class BoolMat{
             this->M = (unsigned int*) malloc (0*sizeof(unsigned int));
             this->scanFile();
             this->n = this->dim/this->m;
-            this->G.initMatrixInt(this->m,this->n);
+            this->G = Matrix(this->m,this->n);
             this->fillMatrix();
             std::cout << this->m << ' '  << this->n << "\n";
         }
@@ -44,7 +44,7 @@ class BoolMat{
             this->M = (unsigned int*) malloc (0*sizeof(unsigned int));
             this->scanFile();
             this->n = this->dim/this->m;
-            this->G.initMatrixInt(this->m,this->n);
+            this->G = Matrix(this->m,this->n);
             this->fillMatrix();
             std::cout << this->m << ' '  << this->n << "\n";
         }
@@ -97,8 +97,8 @@ class BoolMat{
         int getN(void) const
         {  return this->n;   }
 
-        int* operator [] (int index)
-        {   return this->G[index];   }
+        double* operator [] (int index)
+        {  return G[index];  }
 
         void copyBool(BoolMat& m){
             for(int i=0; i<m.getM(); ++i){
