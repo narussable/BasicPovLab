@@ -27,9 +27,9 @@ double invSqrd(double number){
 
 class VectorND{
     protected:
-        double *A;
-        double norm;
-        unsigned int n;
+        double *A = NULL;
+        double norm = 0.0;
+        unsigned int n = 0;
 
         double chiSqrd(void){
             double sum = 0.0;
@@ -51,7 +51,8 @@ class VectorND{
                 this->A[index] = _list.begin()[index];
         }
 
-        VectorND(void){ this->initVector(0); }
+        VectorND(void);
+        ~VectorND(void);
 
         unsigned int dim(void) const;
         double norma(void);
@@ -63,6 +64,12 @@ class VectorND{
         VectorND normalize(void);
         VectorND &operator - (void);
 };
+
+VectorND::VectorND(void)
+{ this->initVector(0); }
+
+VectorND::~VectorND(void)
+{  free(A);  }
 
 double VectorND::norma(void){
     this->updateNorm();

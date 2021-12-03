@@ -7,18 +7,12 @@ using namespace std;
 
 class Matrix{
     protected:
-        double **A;
-        int    m,n;
+        double **A = NULL;
+        int    m = 0, n = 0;
     public:
-        Matrix(int m = 0,int n = 0){ this->initMatrix(m,n); }
-
-        Matrix(initializer_list<VectorND> row){
-            this->initMatrix( row.size(), row.begin()[0].dim() );
-            for(int i = 0; i<this->m; ++i){
-                for(int j = 0; j<this->n; ++j)
-                    this->A[i][j] = row.begin()[i][j];
-            }
-        }
+        Matrix(int m = 0,int n = 0);
+        Matrix(initializer_list<VectorND>);
+        ~Matrix(void);
 
         bool dimComparation(const Matrix&) const;
         unsigned int dimM(void) const;
@@ -31,6 +25,23 @@ class Matrix{
         Matrix& operator -=(const Matrix&);
         Matrix& operator *=(const Matrix&);
 };
+
+Matrix::Matrix(int m, int n) 
+{  this->initMatrix(m,n);  }
+
+Matrix::Matrix(initializer_list<VectorND> row) {
+    this->initMatrix( row.size(), row.begin()[0].dim() );
+    for(int i = 0; i<this->m; ++i){
+        for(int j = 0; j<this->n; ++j)
+            this->A[i][j] = row.begin()[i][j];
+    }
+}
+
+Matrix::~Matrix(void) {
+    for(int i = 0; i < this->m; ++i)
+        free(this->A[i]);
+    free(this->A);
+}
 
 void Matrix::initMatrix(int m, int n){
     this->m = m;
