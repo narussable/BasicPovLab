@@ -7,3 +7,4 @@ cpy_bmp.hpp
 *.swp*
 *.pov*
 *.png*
+Povray.hpp
