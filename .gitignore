@@ -1,8 +1,9 @@
 *.gch*
 a.out
-pru.cpp
+*pru*
 makefile
 opencv/
 cpy_bmp.hpp
 *.swp*
 *.pov*
+*.png*
