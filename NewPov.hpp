@@ -8,13 +8,15 @@
 // Notice: Texture_on: surf_type_ -> TRUE; Texture_off: surf_type_ -> FALSE
 bool rot_ = false, trans_ = false, surf_type_ = false, open_ = false;
 
+VectorND rotV, traV, cam;
+
+
 const char * surface__ = "";
 
 // Povray writer
 class Povray : public ofstream{
     protected:
         // ---------- CONFIG VARIABLES ----------------------
-        VectorND rotV, traV, cam;
         int  blur_S = 500;
         const char* tab = "\t";
 
@@ -40,9 +42,13 @@ class Povray : public ofstream{
         void triangle(const VectorND&, const VectorND&, const VectorND&);
         void s_triangle(const VectorND&, const VectorND&, const VectorND&);
         void disc(const VectorND&, const VectorND&, double, double=0);
-        void bicubic(const initializer_list<VectorND>, float=0.01, int=1, int u=4, int v=4);
+        void bicubic(VectorND *, float=0.01, int=1, int u=4, int v=4);
+        void bicubicSurface(VectorND (*func)(double,double), initializer_list<double>, initializer_list<double>, unsigned int);
+        void triangleSurface(VectorND (*func)(double,double), initializer_list<double>, initializer_list<double>, initializer_list<unsigned int>);
+        void triangleSurface(VectorND (*func)(double,double,double), initializer_list<double>, initializer_list<double>, initializer_list<unsigned int>,double);
 
         void triangle(const VectorND *);
+        void triangle(initializer_list<VectorND>);
 
         // ------------- MODIFIERS -------------------------------
         // GEOMETRICAL MODIFIERS
@@ -157,6 +163,16 @@ void Povray::triangle(const VectorND& corner1,
     *this << "}" << endl;
 }
 
+void Povray::triangle(const VectorND * corner) 
+{  this->triangle(corner[0],corner[1],corner[2]);  }
+
+void Povray::triangle(initializer_list<VectorND> list) {
+    if(list.size() == 3)
+        this->triangle(list.begin()[0],list.begin()[1],list.begin()[2]);   
+    else
+        cerr << "No se insertaron 3 vectores a la lista." << endl;
+}
+
 void Povray::disc(const VectorND& centerPos, 
                   const VectorND& normal, 
                   double radius,
@@ -168,20 +184,75 @@ void Povray::disc(const VectorND& centerPos,
     *this << "}" << endl;
 }
 
-void Povray::bicubic(const initializer_list<VectorND> list, float thick, int type, int u, int v) {
+void Povray::bicubic(VectorND * list, float thick, int type, int u, int v) {
     *this << "bicubic_patch {" << endl
           << tab << "type " << type << endl
           << tab << "flatness " << thick << endl
           << tab << "u_steps " << u << endl
-          << tab << "v_steps " << v << endl;
-    for(int index = 0, eom = 0; index < 16; ++index) {
-        *this << list.begin()[index];
-        if(eom < 4) ++eom;
-        else continue;
-        (index%4 == 0) ? *this << ',' << endl: *this << ',';
+          << tab << "v_steps " << v << endl << tab;
+    for(auto vec = &list[0]; vec != &list[16]+1; ++vec) {
+        static unsigned int index = 1;
+        (index < 17) ? *this << *vec : *this << "";
+        (index < 16) ? *this << ',' : *this << "";
+        (index%4==0 && index!=0 && index!=16) ? *this << endl << tab : *this << "";
+        ++index;
     }
+    *this << endl;
+    this->setSurMod();
+    this->setGeoMod();
+    *this << "}" << endl;
 }
 
+void Povray::triangleSurface(VectorND (*func)(double,double), 
+                                    initializer_list<double> ux,
+                                    initializer_list<double> uy,
+                                    initializer_list<unsigned int> width) {
+    double dx = abs(ux.begin()[0]-ux.begin()[1]) / width.begin()[0];
+    double dy = abs(uy.begin()[0]-uy.begin()[1]) / width.begin()[1];
+    for(double x = ux.begin()[0]; x < ux.begin()[1]; x += dx) {
+        for(double y = uy.begin()[0]; y < uy.begin()[1]; y += dy) {
+            this->triangle({func(x,y),func(x+dx,y),func(x+dx,y+dy)});
+            this->triangle({func(x,y),func(x,y+dy),func(x+dx,y+dy)});
+        }
+    }
+} 
+
+void Povray::triangleSurface(VectorND (*func)(double,double,double), 
+                                    initializer_list<double> ux,
+                                    initializer_list<double> uy,
+                                    initializer_list<unsigned int> width,
+                                    double t) {
+    double dx = abs(ux.begin()[0]-ux.begin()[1]) / width.begin()[0];
+    double dy = abs(uy.begin()[0]-uy.begin()[1]) / width.begin()[1];
+    for(double x = ux.begin()[0]; x < ux.begin()[1]; x += dx) {
+        for(double y = uy.begin()[0]; y < uy.begin()[1]; y += dy) {
+            this->triangle({func(x,y,t),func(x+dx,y,t),func(x+dx,y+dy,t)});
+            this->triangle({func(x,y,t),func(x,y+dy,t),func(x+dx,y+dy,t)});
+        }
+    }
+} 
+
+void Povray::bicubicSurface(VectorND (*func)(double,double), 
+                                    initializer_list<double> ux,
+                                    initializer_list<double> uy, 
+                                    unsigned int pow) {
+    VectorND * vec = (VectorND*) malloc (16 * sizeof(VectorND));
+    double dx = abs(ux.begin()[0]-ux.begin()[1]) / (4^pow);
+    double dy = abs(uy.begin()[0]-uy.begin()[1]) / (4^pow);
+    for(double x = ux.begin()[0]; x < ux.begin()[1]; x += dx) {
+        static unsigned int index = 0;
+        for(double y = uy.begin()[0]; y < uy.begin()[1]; y += dy) {
+            vec[index] = func(x,y);
+            ++index;
+        }
+        if(!(index < 16)) {
+            index = 0;
+            this->bicubic(vec);
+            free(vec);
+            vec = (VectorND*) malloc (16 * sizeof(VectorND));
+        }
+    }
+}
 
 
 // ------------- MODIFIERS -------------------------------
