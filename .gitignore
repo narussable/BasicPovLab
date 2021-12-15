@@ -2,6 +2,7 @@
 a.out
 *pru*
 makefile
+.vscode
 opencv/
 cpy_bmp.hpp
 *.swp*

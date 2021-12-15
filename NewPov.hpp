@@ -7,55 +7,115 @@
 
 // Notice: Texture_on: surf_type_ -> TRUE; Texture_off: surf_type_ -> FALSE
 bool rot_ = false, trans_ = false, surf_type_ = false, open_ = false;
+int  blur_S = 500;
 
 VectorND rotV, traV, cam;
 
-
-const char * surface__ = "";
+std::string surface__;
+const char* tab = "\t";
 
 // Povray writer
 class Povray : public ofstream{
     protected:
-        // ---------- CONFIG VARIABLES ----------------------
-        int  blur_S = 500;
-        const char* tab = "\t";
-
         // ---------- POVRAY CONFIG FUNCTIONS ----------------
-        void addLib(const char *);
-        void assumedGamma(float);
-        void blurSamples(void);
-        void write(const char *);
+        void addLib(
+            const char *);
+        void assumedGamma(
+            float);
+        void blurSamples(
+            void);
+        void write(
+            const char *);
 
     public:
-        Povray(const char *);
-        void declareNew(const char *);
+        Povray(
+            const char *);
+        void declareNew(
+            const char *);
 
         // ------------------------- OBJECTS ---------------------------------
         // SETUP OBJECTS
-        void camera(const VectorND&, const VectorND&);
-        void light(const VectorND&, const VectorND&);
+        void camera(
+            const VectorND&, 
+            const VectorND&);
+        void light(
+            const VectorND&, 
+            const VectorND&);
 
         // GRAPHICAL OBJECTS
-        void sphere(const VectorND&, double);
-        void cone(const VectorND&, const VectorND&, double, double);
-        void cylinder(const VectorND&, const VectorND&, double);
-        void triangle(const VectorND&, const VectorND&, const VectorND&);
-        void s_triangle(const VectorND&, const VectorND&, const VectorND&);
-        void disc(const VectorND&, const VectorND&, double, double=0);
-        void bicubic(VectorND *, float=0.01, int=1, int u=4, int v=4);
-        void bicubicSurface(VectorND (*func)(double,double), initializer_list<double>, initializer_list<double>, unsigned int);
-        void triangleSurface(VectorND (*func)(double,double), initializer_list<double>, initializer_list<double>, initializer_list<unsigned int>);
-        void triangleSurface(VectorND (*func)(double,double,double), initializer_list<double>, initializer_list<double>, initializer_list<unsigned int>,double);
+        void sphere(
+            const VectorND&, 
+            double);
 
-        void triangle(const VectorND *);
-        void triangle(initializer_list<VectorND>);
+        void cone(
+            const VectorND&, 
+            const VectorND&, 
+            double, 
+            double);
 
+        void cylinder(
+            const VectorND&, 
+            const VectorND&, 
+            double);
+
+        void triangle(
+            const VectorND&, 
+            const VectorND&, 
+            const VectorND&);
+
+        void s_triangle(
+            const VectorND&, 
+            const VectorND&, 
+            const VectorND&);
+
+        void disc(
+            const VectorND&, 
+            const VectorND&, 
+            double, 
+            double=0);
+
+        void triangle(                          // TRIANGLE: Defined with an array.
+            const VectorND *);                      // pointer: Pointer to the first element of the array.
+
+        void triangle(                          // TRIANGLE: Defined with a list {}
+            initializer_list<VectorND>);            // in_list: List filled with 3 3D VectorND.
+
+        void bicubic(
+            VectorND *, 
+            float=0.01, 
+            int=1, 
+            int u=4, 
+            int v=4);
+
+        void bicubicSurface(
+            VectorND (*func)(double,double), 
+            std::initializer_list<double>, 
+            std::initializer_list<double>, 
+            unsigned int);
+        void staticSurface(                     // STATIC SURFACE: defined by parametrized function f:IR^2 ->IR
+            std::string,                            // string: Used to determine pixel or voxels choice (triangle/circle). 
+            VectorND (*)(double,double),            // p_func: Parametrized function wich return a 3D VectorND.
+            std::initializer_list<double>,          // e1_Dom: List of two elements to specify the e1 domain.
+            std::initializer_list<double>,          // e2_Dom: List of two elements to specify the e2 domain.
+            std::initializer_list<unsigned int>,    // width : List of two elements to specify the partitions in (e1,e2).
+            double);                                // radius: Posible radius if voxels selected.
+        
+        void dynamicSurface(                    // DYNAMIC SURFACE: defined by parametrized function f:IR^3 ->IR (use for simple animations)
+            std::string,                            // string: Used to determine pixel or voxels choice (triangle/circle). 
+            VectorND (*)(double,double,double),     // p_func: Parametrized function wich return a 3D VectorND.
+            std::initializer_list<double>,          // e1_Dom: List of two elements to specify the e1 domain.
+            std::initializer_list<double>,          // e2_Dom: List of two elements to specify the e2 domain.
+            std::initializer_list<unsigned int>,    // width : List of two elements to specify the partitions in (e1,e2).
+            double,                                 // time  : Time variable.
+            double);                                // radius: Posible radius if voxels selected.
+        
         // ------------- MODIFIERS -------------------------------
         // GEOMETRICAL MODIFIERS
         void setGeoMod(void);
 
         // SURFACE MODIFIERS
         void setSurMod(void);
+        void setRgbt(double,double,double,double);
 };
 
 // Add new povray lib. Just write lib
@@ -69,7 +129,7 @@ void Povray::assumedGamma(float gam_num)
 
 // Blur samples
 void Povray::blurSamples(void)
-{  *this << endl << tab << "blur_samples " << this->blur_S << endl;  }
+{  *this << endl << tab << "blur_samples " << blur_S << endl;  }
 
 // Write down function
 void Povray::write(const char * mssg)
@@ -88,7 +148,6 @@ Povray::Povray(const char * name) : ofstream(name){
     this->addLib("glass.inc");
     this->addLib("metals.inc");
     this->addLib("skies.inc");
-
     this->assumedGamma(2.2);
 }
 
@@ -203,34 +262,44 @@ void Povray::bicubic(VectorND * list, float thick, int type, int u, int v) {
     *this << "}" << endl;
 }
 
-void Povray::triangleSurface(VectorND (*func)(double,double), 
-                                    initializer_list<double> ux,
-                                    initializer_list<double> uy,
-                                    initializer_list<unsigned int> width) {
+void Povray::staticSurface(
+                std::string surface_type,
+                VectorND (*func)(double,double),
+                std::initializer_list<double> ux, 
+                std::initializer_list<double> uy,
+                std::initializer_list<unsigned int> width,
+                double r = 0) {
     double dx = abs(ux.begin()[0]-ux.begin()[1]) / width.begin()[0];
     double dy = abs(uy.begin()[0]-uy.begin()[1]) / width.begin()[1];
     for(double x = ux.begin()[0]; x < ux.begin()[1]; x += dx) {
         for(double y = uy.begin()[0]; y < uy.begin()[1]; y += dy) {
-            this->triangle({func(x,y),func(x+dx,y),func(x+dx,y+dy)});
-            this->triangle({func(x,y),func(x,y+dy),func(x+dx,y+dy)});
+            if(surface_type == "triangle"){
+                this->triangle({func(x,y),func(x+dx,y),func(x+dx,y+dy)});
+                this->triangle({func(x,y),func(x,y+dy),func(x+dx,y+dy)});
+            }else{  this->sphere(func(x,y),r);  }
         }
     }
-} 
+}
 
-void Povray::triangleSurface(VectorND (*func)(double,double,double), 
-                                    initializer_list<double> ux,
-                                    initializer_list<double> uy,
-                                    initializer_list<unsigned int> width,
-                                    double t) {
+void Povray::dynamicSurface(
+                std::string surface_type,
+                VectorND (*func)(double,double,double),
+                std::initializer_list<double> ux, 
+                std::initializer_list<double> uy,
+                std::initializer_list<unsigned int> width,
+                double time,
+                double r = 0) {
     double dx = abs(ux.begin()[0]-ux.begin()[1]) / width.begin()[0];
     double dy = abs(uy.begin()[0]-uy.begin()[1]) / width.begin()[1];
     for(double x = ux.begin()[0]; x < ux.begin()[1]; x += dx) {
         for(double y = uy.begin()[0]; y < uy.begin()[1]; y += dy) {
-            this->triangle({func(x,y,t),func(x+dx,y,t),func(x+dx,y+dy,t)});
-            this->triangle({func(x,y,t),func(x,y+dy,t),func(x+dx,y+dy,t)});
+            if(surface_type == "triangle"){
+                this->triangle({func(x,y,time),func(x+dx,y,time),func(x+dx,y+dy,time)});
+                this->triangle({func(x,y,time),func(x,y+dy,time),func(x+dx,y+dy,time)});
+            }else{  this->sphere(func(x,y,time),r);  }
         }
     }
-} 
+}
 
 void Povray::bicubicSurface(VectorND (*func)(double,double), 
                                     initializer_list<double> ux,
@@ -271,6 +340,12 @@ void Povray::setSurMod(void) {
     const char * type = (surf_type_) ? "\ttexture { " : "\tpigment { ";
     output.append(type) += surface__;
     *this << output.append(" }\n");
+}
+
+void Povray::setRgbt(double r, double g, double b, double f) {
+    surface__ = "rgbt <" + std::to_string(r) + ',' + std::to_string(g) + ',' + 
+                            std::to_string(b) + ',' + std::to_string(f) + '>';
+    surf_type_ = false;
 }
 
 #endif
